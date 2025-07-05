@@ -2,6 +2,7 @@ const std = @import("std");
 const gl = @import("renderer/opengl/gl.zig");
 const OpenGLContext = @import("renderer/opengl/context.zig").OpenGLContext;
 const shader = @import("renderer/opengl/shader.zig");
+const Texture = @import("renderer/opengl/texture.zig").Texture;
 
 pub fn main() !void {
     // SDL2の初期化
@@ -37,20 +38,20 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
     
-    // シェーダーをファイルから読み込む
+    // テクスチャ対応シェーダーを読み込む
     var shader_program = try shader.ShaderProgram.initFromFiles(
         allocator,
-        "assets/shaders/basic.vert",
-        "assets/shaders/basic.frag"
+        "assets/shaders/textured.vert",
+        "assets/shaders/textured.frag"
     );
     defer shader_program.deinit();
 
-    // 三角形の頂点データ
+    // 三角形の頂点データ（位置 + テクスチャ座標）
     const vertices = [_]gl.GLfloat{
-        // 位置
-        -0.5, -0.5, 0.0,  // 左下
-         0.5, -0.5, 0.0,  // 右下
-         0.0,  0.5, 0.0,  // 上
+        // 位置           // テクスチャ座標
+        -0.5, -0.5, 0.0,  0.0, 0.0,  // 左下
+         0.5, -0.5, 0.0,  1.0, 0.0,  // 右下
+         0.0,  0.5, 0.0,  0.5, 1.0,  // 上
     };
 
     // VAOとVBOの作成
@@ -67,13 +68,27 @@ pub fn main() !void {
     gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
     gl.glBufferData(gl.GL_ARRAY_BUFFER, @sizeOf(@TypeOf(vertices)), &vertices, gl.GL_STATIC_DRAW);
     
-    // 頂点属性を設定
-    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 3 * @sizeOf(gl.GLfloat), null);
+    // 頂点属性を設定（位置）
+    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 5 * @sizeOf(gl.GLfloat), null);
     gl.glEnableVertexAttribArray(0);
+    
+    // 頂点属性を設定（テクスチャ座標）
+    gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 5 * @sizeOf(gl.GLfloat), @ptrFromInt(3 * @sizeOf(gl.GLfloat)));
+    gl.glEnableVertexAttribArray(1);
     
     // バインドを解除
     gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
     gl.glBindVertexArray(0);
+    
+    // テクスチャを作成（チェッカーボードパターン）
+    var texture = try Texture.init();
+    defer texture.deinit();
+    try texture.createCheckerboard(allocator, 256);
+    
+    // シェーダーでテクスチャユニットを設定
+    shader_program.use();
+    const tex_location = gl.glGetUniformLocation(shader_program.id, "texture1");
+    gl.glUniform1i(tex_location, 0);
 
     std.log.info("OpenGL rendering initialized successfully!", .{});
 
@@ -102,6 +117,10 @@ pub fn main() !void {
         
         // シェーダープログラムを使用
         shader_program.use();
+        
+        // テクスチャをバインド
+        Texture.activate(gl.GL_TEXTURE0);
+        texture.bind();
         
         // 三角形を描画
         gl.glBindVertexArray(vao);
