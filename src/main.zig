@@ -32,14 +32,17 @@ pub fn main() !void {
     // ビューポートの設定
     OpenGLContext.setViewport(800, 600);
 
-    // シェーダーの作成
-    var vertex_shader = try shader.Shader.init(shader.basic_vertex_shader, .vertex);
-    defer vertex_shader.deinit();
+    // アロケータの準備
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
     
-    var fragment_shader = try shader.Shader.init(shader.basic_fragment_shader, .fragment);
-    defer fragment_shader.deinit();
-    
-    var shader_program = try shader.ShaderProgram.init(&vertex_shader, &fragment_shader);
+    // シェーダーをファイルから読み込む
+    var shader_program = try shader.ShaderProgram.initFromFiles(
+        allocator,
+        "assets/shaders/basic.vert",
+        "assets/shaders/basic.frag"
+    );
     defer shader_program.deinit();
 
     // 三角形の頂点データ
