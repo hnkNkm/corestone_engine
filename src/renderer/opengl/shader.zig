@@ -133,6 +133,21 @@ pub const ShaderProgram = struct {
         gl.glUseProgram(self.id);
     }
     
+    pub fn setMat4(self: *const ShaderProgram, name: [*c]const u8, value: [*]const f32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniformMatrix4fv(location, 1, gl.GL_FALSE, value);
+    }
+    
+    pub fn setVec3(self: *const ShaderProgram, name: [*c]const u8, x: f32, y: f32, z: f32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniform3f(location, x, y, z);
+    }
+    
+    pub fn setInt(self: *const ShaderProgram, name: [*c]const u8, value: i32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniform1i(location, value);
+    }
+    
     pub fn initFromFiles(allocator: std.mem.Allocator, vertex_path: []const u8, fragment_path: []const u8) !ShaderProgram {
         var vertex_shader = try Shader.initFromFile(allocator, vertex_path, .vertex);
         defer vertex_shader.deinit();

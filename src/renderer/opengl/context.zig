@@ -48,6 +48,10 @@ pub const OpenGLContext = struct {
         std.log.info("OpenGL version: {s}", .{gl.c.glGetString(gl.c.GL_VERSION)});
         std.log.info("GLSL version: {s}", .{gl.c.glGetString(gl.c.GL_SHADING_LANGUAGE_VERSION)});
         
+        // アルファブレンディングを有効化
+        gl.glEnable(gl.GL_BLEND);
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+        
         return OpenGLContext{
             .context = context,
             .window = window,

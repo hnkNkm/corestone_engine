@@ -33,6 +33,23 @@ pub const GL_STATIC_DRAW = 0x88E4;
 pub const GL_COLOR_BUFFER_BIT = c.GL_COLOR_BUFFER_BIT;
 pub const GL_DEPTH_BUFFER_BIT = c.GL_DEPTH_BUFFER_BIT;
 
+// エラーコード
+pub const GL_NO_ERROR = 0;
+pub const GL_INVALID_ENUM = 0x0500;
+pub const GL_INVALID_VALUE = 0x0501;
+pub const GL_INVALID_OPERATION = 0x0502;
+pub const GL_STACK_OVERFLOW = 0x0503;
+pub const GL_STACK_UNDERFLOW = 0x0504;
+pub const GL_OUT_OF_MEMORY = 0x0505;
+pub const GL_INVALID_FRAMEBUFFER_OPERATION = 0x0506;
+
+// 情報取得用定数
+pub const GL_VENDOR = 0x1F00;
+pub const GL_RENDERER = 0x1F01;
+pub const GL_VERSION = 0x1F02;
+pub const GL_SHADING_LANGUAGE_VERSION = 0x8B8C;
+pub const GL_VIEWPORT = 0x0BA2;
+
 // テクスチャ関連の定数
 pub const GL_TEXTURE_2D = 0x0DE1;
 pub const GL_TEXTURE0 = 0x84C0;
@@ -45,6 +62,9 @@ pub const GL_LINEAR = 0x2601;
 pub const GL_RGB = 0x1907;
 pub const GL_RGBA = 0x1908;
 pub const GL_UNSIGNED_BYTE = c.GL_UNSIGNED_BYTE;
+pub const GL_BLEND = 0x0BE2;
+pub const GL_SRC_ALPHA = 0x0302;
+pub const GL_ONE_MINUS_SRC_ALPHA = 0x0303;
 
 // SDL_GL関数
 pub const SDL_GL_CreateContext = c.SDL_GL_CreateContext;
@@ -99,6 +119,12 @@ pub var glActiveTexture: *const fn (texture: GLenum) callconv(.C) void = undefin
 pub var glDeleteTextures: *const fn (n: GLsizei, textures: [*c]const GLuint) callconv(.C) void = undefined;
 pub var glGetUniformLocation: *const fn (program: GLuint, name: [*c]const GLchar) callconv(.C) GLint = undefined;
 pub var glUniform1i: *const fn (location: GLint, v0: GLint) callconv(.C) void = undefined;
+pub var glUniform3f: *const fn (location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat) callconv(.C) void = undefined;
+pub var glUniformMatrix4fv: *const fn (location: GLint, count: GLsizei, transpose: GLboolean, value: [*c]const GLfloat) callconv(.C) void = undefined;
+pub var glEnable: *const fn (cap: GLenum) callconv(.C) void = undefined;
+pub var glBlendFunc: *const fn (sfactor: GLenum, dfactor: GLenum) callconv(.C) void = undefined;
+pub var glGetString: *const fn (name: GLenum) callconv(.C) [*c]const u8 = undefined;
+pub var glGetIntegerv: *const fn (pname: GLenum, params: [*c]GLint) callconv(.C) void = undefined;
 
 // OpenGL関数を初期化
 pub fn init() !void {
@@ -139,6 +165,12 @@ pub fn init() !void {
     glDeleteTextures = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glDeleteTextures") orelse return error.OpenGLFunctionNotFound));
     glGetUniformLocation = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glGetUniformLocation") orelse return error.OpenGLFunctionNotFound));
     glUniform1i = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glUniform1i") orelse return error.OpenGLFunctionNotFound));
+    glUniform3f = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glUniform3f") orelse return error.OpenGLFunctionNotFound));
+    glUniformMatrix4fv = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glUniformMatrix4fv") orelse return error.OpenGLFunctionNotFound));
+    glEnable = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glEnable") orelse return error.OpenGLFunctionNotFound));
+    glBlendFunc = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glBlendFunc") orelse return error.OpenGLFunctionNotFound));
+    glGetString = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glGetString") orelse return error.OpenGLFunctionNotFound));
+    glGetIntegerv = @ptrCast(@alignCast(SDL_GL_GetProcAddress("glGetIntegerv") orelse return error.OpenGLFunctionNotFound));
     
     std.log.info("OpenGL functions loaded successfully", .{});
 }

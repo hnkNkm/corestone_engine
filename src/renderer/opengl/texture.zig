@@ -81,7 +81,7 @@ pub const Texture = struct {
     pub fn createCheckerboard(self: *Texture, allocator: std.mem.Allocator, size: u32) !void {
         const width = size;
         const height = size;
-        const data = try allocator.alloc(u8, width * height * 3);
+        const data = try allocator.alloc(u8, width * height * 4);
         defer allocator.free(data);
         
         // チェッカーボードパターンを生成
@@ -89,21 +89,23 @@ pub const Texture = struct {
         while (y < height) : (y += 1) {
             var x: u32 = 0;
             while (x < width) : (x += 1) {
-                const idx = (y * width + x) * 3;
-                const checker = ((x / 32) + (y / 32)) % 2;
+                const idx = (y * width + x) * 4;
+                const checker = ((x / 16) + (y / 16)) % 2;
                 if (checker == 0) {
                     data[idx] = 255;     // R
-                    data[idx + 1] = 128; // G
+                    data[idx + 1] = 0;   // G
                     data[idx + 2] = 0;   // B
+                    data[idx + 3] = 255; // A
                 } else {
                     data[idx] = 0;       // R
-                    data[idx + 1] = 128; // G
+                    data[idx + 1] = 0;   // G
                     data[idx + 2] = 255; // B
+                    data[idx + 3] = 255; // A
                 }
             }
         }
         
-        try self.loadFromData(data, @intCast(width), @intCast(height), gl.GL_RGB);
+        try self.loadFromData(data, @intCast(width), @intCast(height), gl.GL_RGBA);
         std.log.info("Created checkerboard texture: {}x{}", .{ width, height });
     }
     
