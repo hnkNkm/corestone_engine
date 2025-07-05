@@ -31,6 +31,11 @@ pub fn build(b: *std.Build) void {
     // SDL2のシステムライブラリをリンク
     lib.linkSystemLibrary("SDL2");
     lib.linkLibC();
+    
+    // OpenGLフレームワークをリンク（macOS）
+    if (target.result.os.tag == .macos) {
+        lib.linkFramework("OpenGL");
+    }
 
     b.installArtifact(lib);
 
@@ -43,6 +48,11 @@ pub fn build(b: *std.Build) void {
     // SDL2のシステムライブラリをリンク
     exe.linkSystemLibrary("SDL2");
     exe.linkLibC();
+    
+    // OpenGLフレームワークをリンク（macOS）
+    if (target.result.os.tag == .macos) {
+        exe.linkFramework("OpenGL");
+    }
 
     // プラットフォーム固有の設定
     if (target.result.os.tag == .windows) {
