@@ -49,27 +49,48 @@ corestone_engine/
 │   ├── main.zig           # Application entry point
 │   ├── root.zig           # Library root
 │   ├── core/              # Engine core systems
-│   │   └── engine.zig     # Main engine structure
-│   ├── renderer/          # Rendering system (OpenGL)
-│   ├── ecs/               # Entity-Component-System
+│   ├── renderer/          # Rendering system
+│   │   ├── opengl/        # OpenGL implementation
+│   │   │   ├── gl.zig     # OpenGL function loader
+│   │   │   ├── context.zig # OpenGL context management
+│   │   │   ├── shader.zig  # Shader compilation and linking
+│   │   │   └── texture.zig # Texture management
+│   │   └── sprite.zig     # 2D sprite rendering
+│   ├── ecs/               # Entity-Component-System (planned)
 │   └── math/              # Math utilities
-│       └── vec2.zig       # 2D vector math
+│       └── mat4.zig       # 4x4 matrix operations
 └── assets/                # Game assets
+    └── shaders/           # GLSL shader files
+        ├── sprite.vert    # Sprite vertex shader
+        └── sprite.frag    # Sprite fragment shader
 ```
 
 ## Features
 
-### Current (Phase 1)
+### Completed
+
+#### Phase 1: Foundation & First Triangle
 - [x] SDL2 integration
 - [x] Window creation and event handling
 - [x] Basic project structure
-- [ ] OpenGL context initialization
-- [ ] Basic shader system
-- [ ] First triangle rendering
+- [x] OpenGL context initialization
+- [x] Basic shader system
+- [x] First triangle rendering
+
+#### Phase 2: Renderer Enhancement
+- [x] External shader file loading system (.vert/.frag)
+- [x] Texture creation and rendering
+- [x] 2D sprite rendering system
+- [x] 2D orthographic projection camera
+
+### In Progress
+
+#### Phase 3: Core Engine Architecture
+- [ ] Simple Entity-Component-System (ECS) implementation
+- [ ] Integration of ECS with renderer
+- [ ] Multiple sprite management through ECS
 
 ### Planned
-- **Phase 2**: Enhanced rendering (textures, sprites, 2D camera)
-- **Phase 3**: ECS implementation
 - **Phase 4**: 3D rendering, audio, UI system
 - **Phase 5**: Hot-reloading, scene serialization, performance optimization
 

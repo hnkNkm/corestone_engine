@@ -2,6 +2,8 @@ const std = @import("std");
 const gl = @import("renderer/opengl/gl.zig");
 const OpenGLContext = @import("renderer/opengl/context.zig").OpenGLContext;
 const shader = @import("renderer/opengl/shader.zig");
+const Texture = @import("renderer/opengl/texture.zig").Texture;
+const sprite = @import("renderer/sprite.zig");
 
 pub fn main() !void {
     // SDL2の初期化
@@ -32,45 +34,27 @@ pub fn main() !void {
     // ビューポートの設定
     OpenGLContext.setViewport(800, 600);
 
-    // シェーダーの作成
-    var vertex_shader = try shader.Shader.init(shader.basic_vertex_shader, .vertex);
-    defer vertex_shader.deinit();
+    // アロケータの準備
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
     
-    var fragment_shader = try shader.Shader.init(shader.basic_fragment_shader, .fragment);
-    defer fragment_shader.deinit();
+    // スプライトレンダラーを初期化
+    var sprite_renderer = try sprite.SpriteRenderer.init(allocator, 800.0, 600.0);
+    defer sprite_renderer.deinit();
     
-    var shader_program = try shader.ShaderProgram.init(&vertex_shader, &fragment_shader);
-    defer shader_program.deinit();
-
-    // 三角形の頂点データ
-    const vertices = [_]gl.GLfloat{
-        // 位置
-        -0.5, -0.5, 0.0,  // 左下
-         0.5, -0.5, 0.0,  // 右下
-         0.0,  0.5, 0.0,  // 上
-    };
-
-    // VAOとVBOの作成
-    var vao: gl.GLuint = 0;
-    var vbo: gl.GLuint = 0;
+    // テクスチャを作成
+    var texture = try Texture.init();
+    defer texture.deinit();
+    try texture.createCheckerboard(allocator, 128);
     
-    gl.glGenVertexArrays(1, &vao);
-    gl.glGenBuffers(1, &vbo);
+    // スプライトを作成
+    const test_sprite = sprite.Sprite.init(&texture);
     
-    // VAOをバインド
-    gl.glBindVertexArray(vao);
-    
-    // VBOをバインドしてデータをコピー
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
-    gl.glBufferData(gl.GL_ARRAY_BUFFER, @sizeOf(@TypeOf(vertices)), &vertices, gl.GL_STATIC_DRAW);
-    
-    // 頂点属性を設定
-    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 3 * @sizeOf(gl.GLfloat), null);
-    gl.glEnableVertexAttribArray(0);
-    
-    // バインドを解除
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
-    gl.glBindVertexArray(0);
+    // シェーダーでテクスチャユニットを設定
+    sprite_renderer.shader_program.use();
+    const tex_location = gl.glGetUniformLocation(sprite_renderer.shader_program.id, "sprite_texture");
+    gl.glUniform1i(tex_location, 0);
 
     std.log.info("OpenGL rendering initialized successfully!", .{});
 
@@ -97,21 +81,14 @@ pub fn main() !void {
         // 画面をクリア（ダークブルー）
         OpenGLContext.clearScreen(0.1, 0.1, 0.2, 1.0);
         
-        // シェーダープログラムを使用
-        shader_program.use();
-        
-        // 三角形を描画
-        gl.glBindVertexArray(vao);
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
-        gl.glBindVertexArray(0);
+        // 複数のスプライトを描画
+        sprite_renderer.drawSprite(&test_sprite, 100.0, 100.0, 0.5);
+        sprite_renderer.drawSprite(&test_sprite, 400.0, 300.0, 1.0);
+        sprite_renderer.drawSprite(&test_sprite, 600.0, 200.0, 0.75);
         
         // バッファをスワップ
         gl_context.swapBuffers();
     }
-    
-    // クリーンアップ
-    gl.glDeleteVertexArrays(1, &vao);
-    gl.glDeleteBuffers(1, &vbo);
 
     std.log.info("Shutting down Corestone Engine...", .{});
 }

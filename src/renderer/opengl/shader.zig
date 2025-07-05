@@ -54,6 +54,7 @@ pub const Shader = struct {
             return error.ShaderCompilationFailed;
         }
         
+        std.log.info("Shader compiled successfully (type: {})", .{shader_type});
         return Shader{
             .id = shader_id,
             .shader_type = shader_type,
@@ -62,6 +63,21 @@ pub const Shader = struct {
     
     pub fn deinit(self: *Shader) void {
         gl.glDeleteShader(self.id);
+    }
+    
+    pub fn initFromFile(allocator: std.mem.Allocator, file_path: []const u8, shader_type: ShaderType) !Shader {
+        const file = try std.fs.cwd().openFile(file_path, .{});
+        defer file.close();
+        
+        const file_size = try file.getEndPos();
+        const source = try allocator.alloc(u8, file_size);
+        defer allocator.free(source);
+        
+        _ = try file.read(source);
+        
+        std.log.info("Loaded shader from file: {s} ({} bytes)", .{ file_path, file_size });
+        
+        return init(source, shader_type);
     }
 };
 
@@ -115,6 +131,31 @@ pub const ShaderProgram = struct {
     
     pub fn use(self: *const ShaderProgram) void {
         gl.glUseProgram(self.id);
+    }
+    
+    pub fn setMat4(self: *const ShaderProgram, name: [*c]const u8, value: [*]const f32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniformMatrix4fv(location, 1, gl.GL_FALSE, value);
+    }
+    
+    pub fn setVec3(self: *const ShaderProgram, name: [*c]const u8, x: f32, y: f32, z: f32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniform3f(location, x, y, z);
+    }
+    
+    pub fn setInt(self: *const ShaderProgram, name: [*c]const u8, value: i32) void {
+        const location = gl.glGetUniformLocation(self.id, name);
+        gl.glUniform1i(location, value);
+    }
+    
+    pub fn initFromFiles(allocator: std.mem.Allocator, vertex_path: []const u8, fragment_path: []const u8) !ShaderProgram {
+        var vertex_shader = try Shader.initFromFile(allocator, vertex_path, .vertex);
+        defer vertex_shader.deinit();
+        
+        var fragment_shader = try Shader.initFromFile(allocator, fragment_path, .fragment);
+        defer fragment_shader.deinit();
+        
+        return init(&vertex_shader, &fragment_shader);
     }
 };
 
